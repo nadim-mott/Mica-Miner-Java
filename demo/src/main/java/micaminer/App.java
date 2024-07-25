@@ -12,12 +12,9 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
-/**
- * JavaFX App
- */
+
 public class App extends Application {
 
     private static Scene scene;
@@ -28,7 +25,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        // ---- Define JavaFX Parameters: -----
+        // ----- Define JavaFX Parameters: -----
         Group root = new Group();
         scene = new Scene(root, 640, 480, Color.WHITE);
         SimpleGameObject puppet = new PuppetCharacter(root, 100,100);
@@ -36,11 +33,13 @@ public class App extends Application {
         stage.show();
 
 
-        // Initialize lastUpdateTime
-        lastUpdateTime = System.nanoTime();
+        // ----- Initialize Keyboard input: -----
         scene.setOnKeyPressed(event -> handleKeyPress(event));
         scene.setOnKeyReleased(event -> handleKeyReleased(event));
-        // Create and start the game loop
+
+
+        // ----- Create and start gameLoop: -----
+        lastUpdateTime = System.nanoTime();
         AnimationTimer gameLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
