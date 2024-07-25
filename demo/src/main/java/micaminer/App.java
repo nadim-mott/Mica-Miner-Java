@@ -10,7 +10,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 /**
@@ -20,42 +22,74 @@ public class App extends Application {
 
     private static Scene scene;
     private static List<GameObject> game_objects;
-    private static final int SLEEP_LENGTH = 1000;
+    private static final double TARGET_FPS = 60.0;
+    private static final double SLEEP_LENGTH = 1_000_000_000 / TARGET_FPS;
+    private long lastUpdateTime;
 
     @Override
     public void start(Stage stage) throws IOException {
         // ---- Define JavaFX Parameters: -----
         Group root = new Group();
         scene = new Scene(root, 640, 480, Color.WHITE);
-        drawGameObjects(root);
+        SimpleGameObject puppet = new PuppetCharacter(root, 100,100);
         stage.setScene(scene);
         stage.show();
 
 
         // Initialize lastUpdateTime
-        long lastUpdateTime = System.nanoTime();
-
+        lastUpdateTime = System.nanoTime();
+        scene.setOnKeyPressed(event -> handleKeyPress(event));
+        scene.setOnKeyReleased(event -> handleKeyReleased(event));
         // Create and start the game loop
         AnimationTimer gameLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                double deltaTime = (now - lastUpdateTime) / 1_000_000_000.0; // Convert nanoseconds to seconds
-                stepGameObjects();
+                double deltaTime = (now - lastUpdateTime); 
+                if (deltaTime >= SLEEP_LENGTH) {
+                    stepGameObjects();
+                    drawGameObjects();
+                    lastUpdateTime = now;
+                }
+                
             }
         };
         gameLoop.start();
     }
 
-    public void drawGameObjects(Group root){
+    private void handleKeyPress(KeyEvent event) {
+        /* 
+            TODO Potentially make this more efficient if the game is slowing down
+            only a handful of GameObject will have keyevents relative to the many
+            that do not so this loop. I am leaving this as is for now for the sake
+            of making this engine easier to expand.
+        */
         for (GameObject object : game_objects){
-            object.drawEvent(root);
+            object.keyPressed(event);
+        }
+    }
+    private void handleKeyReleased(KeyEvent event) {
+        /* 
+            TODO Potentially make this more efficient if the game is slowing down
+            only a handful of GameObject will have keyevents relative to the many
+            that do not so this loop. I am leaving this as is for now for the sake
+            of making this engine easier to expand.
+        */
+        for (GameObject object : game_objects){
+            object.keyReleased(event);
+        }
+    }
+
+
+
+    public void drawGameObjects(){
+        for (GameObject object : game_objects){
+            object.drawEvent();
         }
     }
 
     public static void stepGameObjects(){
         for (GameObject object : game_objects){
             object.stepEvent();
-            object.updateDrawing();
         }
     }
 
@@ -69,15 +103,7 @@ public class App extends Application {
         scene.setRoot(loadFXML(fxml));
     }
 
-    
-    static void sleep(){
-        try {
-            Thread.sleep(SLEEP_LENGTH);
-        } catch (InterruptedException e) {
-            System.err.println("Thread was interrupted");
-            e.printStackTrace();
-        }
-    }
+
 
 
     private static Parent loadFXML(String fxml) throws IOException {
@@ -87,8 +113,6 @@ public class App extends Application {
 
     public static void main(String[] args) {
         game_objects = new ArrayList<GameObject>();
-        PlayerPuppet puppet = new PlayerPuppet(100,100);
-        addGameObject(puppet);
         launch();
         
     }
